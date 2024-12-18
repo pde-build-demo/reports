@@ -39,7 +39,7 @@ jobs:
 
     - name: Cache maven files
       id: maven-cache
-      uses: actions/cache@v2
+      uses: actions/cache@v4.2.0
       with:
         path: ~/.m2/repository
         key: maven-${{ hashFiles('**/pom.xml') }}
@@ -65,4 +65,14 @@ jobs:
         name: Release ${{ steps.changelog.outputs.version }}
         body: ${{ steps.changelog.outputs.clean_changelog }}
         token: ${{ secrets.GITHUB_TOKEN }}
-
+  trigger-war-build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Triggering the war build"
+      - name: Trigger repository dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+            token: ${{ secrets.COMMON_BUILD_PIPELINE_PAT }}
+            repository: pde-build-demo/war
+            event-type: dependency_updated
+            client-payload: '{"triggered_by": "${{ github.repository }}, on push event", "commit_sha": "${{ github.sha }}", "branch": "${{ github.ref }}", "reports-version": "${{ steps.changelog.outputs.version }}"}'
